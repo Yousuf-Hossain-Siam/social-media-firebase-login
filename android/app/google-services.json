@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "698321088212",
+    "project_id": "social-media-login-d72ab",
+    "storage_bucket": "social-media-login-d72ab.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:698321088212:android:be5208e9489381023e9541",
+        "android_client_info": {
+          "package_name": "com.example.social_media_login"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCcrt9hQJ39xsj5rom4senbvNCadQEGplw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
