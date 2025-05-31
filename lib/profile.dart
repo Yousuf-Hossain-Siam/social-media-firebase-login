@@ -1,105 +1,96 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/material.dart';
-import 'package:social_media_login/home.dart'; // Import your home screen for navigation
+import 'package:firebase_auth/firebase_auth.dart';
 
 class Profile extends StatelessWidget {
-  const Profile({super.key});
+  final Map<String, dynamic>? result;  // Accept login result (LinkedIn, Google, or Facebook data)
+  final String? loginMethod;  // Accept the login method (Google, Facebook, LinkedIn)
 
-  // Logout function
-  Future<void> signOut(BuildContext context) async {
-    try {
-      // Sign out of Firebase
-      await FirebaseAuth.instance.signOut();
-      // print("User signed out from Firebase");
-
-      // Sign out from Google
-      await GoogleSignIn().signOut();
-      // print("User signed out from Google");
-
-      // Navigate to Home page after logging out
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const Home()), // Replace Profile screen with Home screen
-      );
-    } catch (e) {
-      // print("Error signing out: $e");
-    }
-  }
+  const Profile({super.key, this.result, this.loginMethod});
 
   @override
   Widget build(BuildContext context) {
-    // Get the current user from Firebase
     User? user = FirebaseAuth.instance.currentUser;
 
+    // Determine which data to show based on login method
+    String profilePictureUrl = '';
+    String displayName = '';
+    String email = '';
+
+    if (loginMethod == 'linkedin' && result != null && result!['userData'] is Map) {
+      // --- CHANGES START HERE for LinkedIn OIDC /v2/userinfo data ---
+      final linkedinUserData = result!['userData'];
+      profilePictureUrl = linkedinUserData['picture'] ?? 'https://default-image-url.com';
+      displayName = linkedinUserData['name'] ?? 'LinkedIn User'; // Full name
+      email = linkedinUserData['email'] ?? 'No email available';
+      // --- CHANGES END HERE ---
+    } else if (loginMethod == 'google' && user != null) {
+      // Google data
+      profilePictureUrl = user.photoURL ?? 'https://default-image-url.com';
+      displayName = user.displayName ?? 'Google User';
+      email = user.email ?? 'No email available';
+    } else if (loginMethod == 'facebook' && user != null) {
+      // Facebook data
+      profilePictureUrl = user.photoURL ?? 'https://default-image-url.com';
+      displayName = user.displayName ?? 'Facebook User';
+      email = user.email ?? 'No email available';
+    } else {
+      // Fallback: Firebase user data (if user is logged in via email/password or other methods)
+      profilePictureUrl = user?.photoURL ?? 'https://default-image-url.com';
+      displayName = user?.displayName ?? 'Unknown User';
+      email = user?.email ?? 'No email available';
+    }
+
     return Scaffold(
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Display the user's profile picture (Google profile image)
-          CircleAvatar(
-            radius: 50,
-            backgroundImage: NetworkImage(user?.photoURL ?? 'https://www.example.com/default_image.jpg'), // Default image if null
-          ),
-          const SizedBox(height: 20),
-          // Display the user's name
-          Text(
-            user?.displayName ?? 'Unknown User', // Fallback if name is null
-            style: const TextStyle(
-              fontSize: 24,
-              color: Colors.green,
-              fontWeight: FontWeight.bold,
+      appBar: AppBar(
+        title: const Text('Profile'),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Display profile image based on login method
+            CircleAvatar(
+              radius: 50,
+              backgroundImage: NetworkImage(profilePictureUrl),
             ),
-          ),
-          const SizedBox(height: 20),
-          // Display a sign-up success message
-          Container(
-            height: MediaQuery.of(context).size.height / 10,
-            width: MediaQuery.of(context).size.width / 1,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Colors.limeAccent,
-                  Colors.lightGreenAccent,
-                  Colors.greenAccent,
-                ],
-              ),
+            const SizedBox(height: 20),
+            Text(
+              displayName,
+              style: const TextStyle(fontSize: 24, color: Colors.green, fontWeight: FontWeight.bold),
             ),
-            child: const Center(
-              child: Text(
-                'Successfully Signed Up',
-                style: TextStyle(
-                  fontSize: 24,
-                  color: Colors.orange,
-                  fontWeight: FontWeight.bold,
+            const SizedBox(height: 20),
+            Text(
+              email,
+              style: const TextStyle(fontSize: 16, color: Colors.black),
+            ),
+            const SizedBox(height: 40),
+            SizedBox(
+              width: MediaQuery.of(context).size.width / 2,
+              height: MediaQuery.of(context).size.height / 15,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black45,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                onPressed: () async {
+                  // Handle Firebase logout
+                  await FirebaseAuth.instance.signOut();
+                  // Ensure you navigate back to the appropriate login/home screen.
+                  // If you have a named route for your Home screen (e.g., '/home'),
+                  // you could use Navigator.pushReplacementNamed(context, '/home');
+                  // Otherwise, pop until the first route or push a new route.
+                  Navigator.pop(context); // Pops the current Profile screen
+                },
+                child: const Text(
+                  'Logout',
+                  style: TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 40),
-          // Logout button
-          SizedBox(
-            width: MediaQuery.of(context).size.width / 2,
-            height: MediaQuery.of(context).size.height / 15,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black45,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-              onPressed: () async {
-                await signOut(context); // Sign out the user
-              },
-              child: const Text(
-                'Logout',
-                style: TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

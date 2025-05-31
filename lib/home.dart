@@ -1,51 +1,19 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:social_media_login/custom_textfield.dart';
-import 'package:social_media_login/profile.dart';
-import 'package:social_media_login/social_media_login.dart';
-
+import 'package:social_media_login/custom_textfield.dart'; // CustomTextField
+import 'package:social_media_login/services/linkedin_sign_in_service.dart'; // Import LinkedIn service
+import 'package:social_media_login/profile.dart'; // Import Profile screen
+import 'social_media_login.dart'; // Import the SocialMediaLogin widget
+import 'package:firebase_auth/firebase_auth.dart'; // FirebaseAuth for Google/Facebook login
 
 class Home extends StatelessWidget {
   const Home({super.key});
 
-  Future<void> signINWithGoogle() async {
-    try {
-      FirebaseAuth auth = FirebaseAuth.instance;
-      final GoogleSignIn googleSignIn = GoogleSignIn();
-
-      // Trigger the authentication flow
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-
-      // Check if the user is null (cancelled the sign-in process)
-      if (googleUser == null) {
-      
-        return; // Exit the function early if the user canceled
-      }
-
-      // Obtain the auth details from the request
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-
-      // Create a new credential
-      final AuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      // Sign in with the credential
-      final UserCredential userCredential = await auth.signInWithCredential(credential);
-      // You can now use userCredential to access user information
-     
-    } catch (e) {
-      // Handle error
-  
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent, // Set to transparent to show gradient
+      backgroundColor: Colors.transparent,
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -93,8 +61,7 @@ class Home extends StatelessWidget {
                     ),
                   ),
                   onPressed: () {
-                    // Handle Sign In button press
-                  
+                    // Handle Sign In button press (email/password logic here)
                   },
                   child: const Text(
                     'Sign in',
@@ -103,24 +70,83 @@ class Home extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
+              // SocialMediaLogin widget for LinkedIn, Google, Facebook
               SocialMediaLogin(
+                onLinkedinPressed: () async {
+                  final LinkedInSignInService _linkedinSignInService = LinkedInSignInService();
+
+                  // Call LinkedIn sign-in service
+                  final result = await _linkedinSignInService.signInWithLinkedIn();
+                  if (result != null) {
+                    // If successful, navigate to Profile screen with LinkedIn data
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => Profile(
+                          result: result,  // Pass LinkedIn result
+                          loginMethod: 'linkedin',  // Pass login method
+                        ),
+                      ),
+                    );
+                  } else {
+                    print("LinkedIn login failed");
+                  }
+                },
                 onGooglePressed: () async {
-                  await signINWithGoogle();
-                  // Optionally navigate to another screen after successful login
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const Profile()));
+                  try {
+                    final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+                    final GoogleSignInAuthentication googleAuth = await googleUser!.authentication;
+
+                    final credential = GoogleAuthProvider.credential(
+                      accessToken: googleAuth.accessToken,
+                      idToken: googleAuth.idToken,
+                    );
+
+                    final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+
+                    // Navigate to Profile screen with Google data
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => Profile(
+                          result: {
+                            'userData': userCredential.user,
+                          },
+                          loginMethod: 'google',
+                        ),
+                      ),
+                    );
+                  } catch (e) {
+                    print("Google login failed: $e");
+                  }
                 },
-                onFacebookPressed: () {
-                  // Handle Facebook login here
-                  // print('Facebook login pressed');
-                },
-                onInstagramPressed: () {
-                  // Handle Instagram login here
-                  // print('Instagram login pressed');
-                },
-                onLinkedinPressed: () {
-                  // Handle LinkedIn login here
-                  // print('LinkedIn login pressed');
-                },
+                onFacebookPressed: () async {
+                  try {
+                    final LoginResult result = await FacebookAuth.instance.login();
+
+                    if (result.status == LoginStatus.success) {
+                      final credential = FacebookAuthProvider.credential(result.accessToken!.tokenString);
+                      final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+
+                      // Navigate to Profile screen with Facebook data
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Profile(
+                            result: {
+                              'userData': userCredential.user,
+                            },
+                            loginMethod: 'facebook',
+                          ),
+                        ),
+                      );
+                    } else {
+                      print("Facebook login failed");
+                    }
+                  } catch (e) {
+                    print("Facebook login error: $e");
+                  }
+                }, onInstagramPressed: () {  },
               ),
             ],
           ),
