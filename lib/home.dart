@@ -72,86 +72,95 @@ class Home extends StatelessWidget {
               const SizedBox(height: 20),
               // SocialMediaLogin widget for LinkedIn, Google, Facebook
               SocialMediaLogin(
-                onLinkedinPressed: () async {
-                  final LinkedInSignInService _linkedinSignInService = LinkedInSignInService();
-
-                  // Call LinkedIn sign-in service
-                  final result = await _linkedinSignInService.signInWithLinkedIn();
-                  if (result != null) {
-                    // If successful, navigate to Profile screen with LinkedIn data
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => Profile(
-                          result: result,  // Pass LinkedIn result
-                          loginMethod: 'linkedin',  // Pass login method
-                        ),
-                      ),
-                    );
-                  } else {
-                    print("LinkedIn login failed");
-                  }
-                },
-                onGooglePressed: () async {
-                  try {
-                    final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-                    final GoogleSignInAuthentication googleAuth = await googleUser!.authentication;
-
-                    final credential = GoogleAuthProvider.credential(
-                      accessToken: googleAuth.accessToken,
-                      idToken: googleAuth.idToken,
-                    );
-
-                    final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
-
-                    // Navigate to Profile screen with Google data
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => Profile(
-                          result: {
-                            'userData': userCredential.user,
-                          },
-                          loginMethod: 'google',
-                        ),
-                      ),
-                    );
-                  } catch (e) {
-                    print("Google login failed: $e");
-                  }
-                },
-                onFacebookPressed: () async {
-                  try {
-                    final LoginResult result = await FacebookAuth.instance.login();
-
-                    if (result.status == LoginStatus.success) {
-                      final credential = FacebookAuthProvider.credential(result.accessToken!.tokenString);
-                      final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
-
-                      // Navigate to Profile screen with Facebook data
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => Profile(
-                            result: {
-                              'userData': userCredential.user,
-                            },
-                            loginMethod: 'facebook',
-                          ),
-                        ),
-                      );
-                    } else {
-                      print("Facebook login failed");
-                    }
-                  } catch (e) {
-                    print("Facebook login error: $e");
-                  }
-                }, onInstagramPressed: () {  },
+                onLinkedinPressed: () => _handleLinkedInLogin(context),
+                onGooglePressed:() => _handleGoogleLogin(context),
+                onFacebookPressed: () => _handleFacebookLogin(context),
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  // --- LinkedIn Login Function ---
+  void _handleLinkedInLogin(BuildContext context) async {
+    final LinkedInSignInService _linkedinSignInService = LinkedInSignInService();
+
+    // Call LinkedIn sign-in service
+    final result = await _linkedinSignInService.signInWithLinkedIn();
+    if (result != null) {
+      // If successful, navigate to Profile screen with LinkedIn data
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Profile(
+            result: result, // Pass LinkedIn result
+            loginMethod: 'linkedin', // Pass login method
+          ),
+        ),
+      );
+    } else {
+      print("LinkedIn login failed");
+    }
+  }
+
+  // --- Google Login Function ---
+  void _handleGoogleLogin(BuildContext context) async {
+    try {
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      final GoogleSignInAuthentication googleAuth = await googleUser!.authentication;
+
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+
+      // Navigate to Profile screen with Google data
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Profile(
+            result: {
+              'userData': userCredential.user,
+            },
+            loginMethod: 'google',
+          ),
+        ),
+      );
+    } catch (e) {
+      print("Google login failed: $e");
+    }
+  }
+
+  // --- Facebook Login Function ---
+  void _handleFacebookLogin(BuildContext context) async {
+    try {
+      final LoginResult result = await FacebookAuth.instance.login();
+
+      if (result.status == LoginStatus.success) {
+        final credential = FacebookAuthProvider.credential(result.accessToken!.tokenString);
+        final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+
+        // Navigate to Profile screen with Facebook data
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Profile(
+              result: {
+                'userData': userCredential.user,
+              },
+              loginMethod: 'facebook',
+            ),
+          ),
+        );
+      } else {
+        print("Facebook login failed");
+      }
+    } catch (e) {
+      print("Facebook login error: $e");
+    }
   }
 }

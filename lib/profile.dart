@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
+import 'package:social_media_login/home.dart';
+// Optional: If you have a sign-out method in your LinkedIn service
+// import 'package:social_media_login/services/linkedin_sign_in_service.dart';
 
 class Profile extends StatelessWidget {
-  final Map<String, dynamic>? result;  // Accept login result (LinkedIn, Google, or Facebook data)
-  final String? loginMethod;  // Accept the login method (Google, Facebook, LinkedIn)
+  final Map<String, dynamic>? result; // Accept login result (LinkedIn, Google, or Facebook data)
+  final String? loginMethod; // Accept the login method (Google, Facebook, LinkedIn)
 
   const Profile({super.key, this.result, this.loginMethod});
 
@@ -17,25 +22,23 @@ class Profile extends StatelessWidget {
     String email = '';
 
     if (loginMethod == 'linkedin' && result != null && result!['userData'] is Map) {
-      // --- CHANGES START HERE for LinkedIn OIDC /v2/userinfo data ---
       final linkedinUserData = result!['userData'];
-      profilePictureUrl = linkedinUserData['picture'] ?? 'https://default-image-url.com';
+      profilePictureUrl = linkedinUserData['picture'] ?? 'https://default-image-url.com'; 
       displayName = linkedinUserData['name'] ?? 'LinkedIn User'; // Full name
       email = linkedinUserData['email'] ?? 'No email available';
-      // --- CHANGES END HERE ---
     } else if (loginMethod == 'google' && user != null) {
       // Google data
-      profilePictureUrl = user.photoURL ?? 'https://default-image-url.com';
+      profilePictureUrl = user.photoURL ?? 'https://default-image-url.com'; 
       displayName = user.displayName ?? 'Google User';
       email = user.email ?? 'No email available';
     } else if (loginMethod == 'facebook' && user != null) {
       // Facebook data
-      profilePictureUrl = user.photoURL ?? 'https://default-image-url.com';
+      profilePictureUrl = user.photoURL ?? 'https://default-image-url.com'; 
       displayName = user.displayName ?? 'Facebook User';
       email = user.email ?? 'No email available';
     } else {
-      // Fallback: Firebase user data (if user is logged in via email/password or other methods)
-      profilePictureUrl = user?.photoURL ?? 'https://default-image-url.com';
+      // Fallback: Firebase user data
+      profilePictureUrl = user?.photoURL ?? 'https://default-image-url.com'; 
       displayName = user?.displayName ?? 'Unknown User';
       email = user?.email ?? 'No email available';
     }
@@ -48,7 +51,7 @@ class Profile extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Display profile image based on login method
+            // Display profile image
             CircleAvatar(
               radius: 50,
               backgroundImage: NetworkImage(profilePictureUrl),
@@ -75,13 +78,24 @@ class Profile extends StatelessWidget {
                   ),
                 ),
                 onPressed: () async {
-                  // Handle Firebase logout
+                  // Sign out from Firebase
                   await FirebaseAuth.instance.signOut();
-                  // Ensure you navigate back to the appropriate login/home screen.
-                  // If you have a named route for your Home screen (e.g., '/home'),
-                  // you could use Navigator.pushReplacementNamed(context, '/home');
-                  // Otherwise, pop until the first route or push a new route.
-                  Navigator.pop(context); // Pops the current Profile screen
+
+                  // Sign out from Google
+                  await GoogleSignIn().signOut();
+
+                  // Sign out from Facebook
+                  await FacebookAuth.instance.logOut();
+
+                  // Optional: Clear any cached LinkedIn session if needed
+                  // await LinkedInSignInService.signOut(); // Implement this in your service
+
+                  // Navigate back to home screen
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const Home()),
+                    (route) => false,
+                  );
                 },
                 child: const Text(
                   'Logout',

@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 
 class SocialMediaLogin extends StatelessWidget {
   final VoidCallback onFacebookPressed;
-  final VoidCallback onInstagramPressed;
+
   final VoidCallback onLinkedinPressed;
   final VoidCallback onGooglePressed; // Added callback for Google
 
   const SocialMediaLogin({
     super.key,
     required this.onFacebookPressed,
-    required this.onInstagramPressed,
+   
     required this.onLinkedinPressed,
     required this.onGooglePressed, // Added Google callback parameter
   });
@@ -24,12 +24,8 @@ class SocialMediaLogin extends StatelessWidget {
           imagePath: 'assets/images/facebook.png',
           onPressed: onFacebookPressed,
         ),
-        SizedBox(width: 16),
-        _socialMediaButton(
-          context: context,
-          imagePath: 'assets/images/instagram.png',
-          onPressed: onInstagramPressed,
-        ),
+
+       
         SizedBox(width: 16),
         _socialMediaButton(
           context: context,
